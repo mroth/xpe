@@ -1,0 +1,19 @@
+name: test
+on: push
+
+jobs:
+  test:
+    runs-on: macos-11 # latest on https://github.com/actions/virtual-environments
+    strategy:
+      matrix:
+        go:
+          - "1.17"
+    name: Go ${{ matrix.go }} test
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - run: |
+          sw_vers
+          go test -v

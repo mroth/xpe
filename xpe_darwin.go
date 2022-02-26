@@ -35,8 +35,12 @@ func GetCPU() (*CPU, error) {
 
 	perfLevels, err := syscall.SysctlUint32(hwNPerflevels)
 	if err != nil {
-		// TODO: might not exist on older versions of macOS?
-		return nil, err
+		// TODO: seems might not exist on older versions of macOS? lets not error if so
+		return &CPU{
+			BrandString: brandString,
+			Threads:     int(threads),
+			Cores:       int(cores),
+		}, nil
 	}
 
 	var lpCores, leCores uint32
