@@ -43,24 +43,24 @@ func GetCPU() (*CPU, error) {
 		}, nil
 	}
 
-	var lpCores, leCores uint32
+	var lpCores, ppCores uint32
 	if perfLevels >= 1 {
 		lpCores, err = syscall.SysctlUint32(lpKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get %v: %w", lpKey, err)
 		}
 
-		leCores, err = syscall.SysctlUint32(leKey)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get %v: %w", leKey, err)
-		}
-	}
-
-	var ppCores, peCores uint32
-	if perfLevels >= 2 {
 		ppCores, err = syscall.SysctlUint32(ppKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get %v: %w", ppKey, err)
+		}
+	}
+
+	var leCores, peCores uint32
+	if perfLevels >= 2 {
+		leCores, err = syscall.SysctlUint32(leKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get %v: %w", leKey, err)
 		}
 
 		peCores, err = syscall.SysctlUint32(peKey)
