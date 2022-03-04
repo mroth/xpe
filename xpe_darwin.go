@@ -5,7 +5,23 @@ import (
 	"syscall"
 )
 
-//nperflevels
+type sysctler interface {
+	Sysctl(name string) (value string, err error)
+	SysctlUint32(name string) (value uint32, err error)
+}
+
+type nativeSyscallPackage struct{}
+
+func (s nativeSyscallPackage) Sysctl(name string) (value string, err error) {
+	return syscall.Sysctl(name)
+}
+
+func (s nativeSyscallPackage) SysctlUint32(name string) (value uint32, err error) {
+	return syscall.SysctlUint32(name)
+}
+
+var darwinsys sysctler = nativeSyscallPackage{}
+
 func GetCPU() (*CPU, error) {
 	const (
 		cpuBrandString = "machdep.cpu.brand_string"
@@ -18,22 +34,22 @@ func GetCPU() (*CPU, error) {
 		peKey          = "hw.perflevel1.physicalcpu"
 	)
 
-	brandString, err := syscall.Sysctl(cpuBrandString)
+	brandString, err := darwinsys.Sysctl(cpuBrandString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get %v: %w", cpuBrandString, err)
 	}
 
-	threads, err := syscall.SysctlUint32(cpuThreadCount)
+	threads, err := darwinsys.SysctlUint32(cpuThreadCount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get %v: %w", cpuThreadCount, err)
 	}
 
-	cores, err := syscall.SysctlUint32(cpuCoreCount)
+	cores, err := darwinsys.SysctlUint32(cpuCoreCount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get %v: %w", cpuCoreCount, err)
 	}
 
-	perfLevels, err := syscall.SysctlUint32(hwNPerflevels)
+	perfLevels, err := darwinsys.SysctlUint32(hwNPerflevels)
 	if err != nil {
 		// TODO: seems might not exist on older versions of macOS? lets not error if so
 		return &CPU{
@@ -45,12 +61,12 @@ func GetCPU() (*CPU, error) {
 
 	var lpCores, ppCores uint32
 	if perfLevels >= 1 {
-		lpCores, err = syscall.SysctlUint32(lpKey)
+		lpCores, err = darwinsys.SysctlUint32(lpKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get %v: %w", lpKey, err)
 		}
 
-		ppCores, err = syscall.SysctlUint32(ppKey)
+		ppCores, err = darwinsys.SysctlUint32(ppKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get %v: %w", ppKey, err)
 		}
@@ -58,12 +74,12 @@ func GetCPU() (*CPU, error) {
 
 	var leCores, peCores uint32
 	if perfLevels >= 2 {
-		leCores, err = syscall.SysctlUint32(leKey)
+		leCores, err = darwinsys.SysctlUint32(leKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get %v: %w", leKey, err)
 		}
 
-		peCores, err = syscall.SysctlUint32(peKey)
+		peCores, err = darwinsys.SysctlUint32(peKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get %v: %w", peKey, err)
 		}
