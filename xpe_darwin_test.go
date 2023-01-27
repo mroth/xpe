@@ -67,6 +67,32 @@ func TestMockGetCPU_Darwin(t *testing.T) {
 		cpu  *CPU
 	}{
 		{
+			name: "MacBook Pro (14-inch, 2023) - Apple M2 Pro [8p, 4e, 19g], macOS 13.2",
+			path: "testdata/m2pro-macos13_2_0.txt",
+			cpu: &CPU{
+				BrandString:              "Apple M2 Pro",
+				Threads:                  12,
+				Cores:                    12,
+				LogicalPerformanceCores:  8,
+				LogicalEfficiencyCores:   4,
+				PhysicalPerformanceCores: 8,
+				PhysicalEfficiencyCores:  4,
+			},
+		},
+		{
+			name: "MacBook Pro (14-inch, 2021) - Apple M1 Pro [8p, 2e, 16g], macOS 13.0.1",
+			path: "testdata/m1pro-macos13_0_1.txt",
+			cpu: &CPU{
+				BrandString:              "Apple M1 Pro",
+				Threads:                  10,
+				Cores:                    10,
+				LogicalPerformanceCores:  8,
+				LogicalEfficiencyCores:   2,
+				PhysicalPerformanceCores: 8,
+				PhysicalEfficiencyCores:  2,
+			},
+		},
+		{
 			name: "MacBook Pro (14-inch, 2021) - Apple M1 Pro [8p, 2e, 16g], macOS 12.2.1",
 			path: "testdata/m1pro-macos12_2_1.txt",
 			cpu: &CPU{
@@ -116,7 +142,7 @@ func TestMockGetCPU_Darwin(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(m.cpu, cpu) {
-				t.Fatalf("want %v, got %v", m.cpu, cpu)
+				t.Fatalf("want %+v, got %+v", m.cpu, cpu)
 			}
 		})
 	}
