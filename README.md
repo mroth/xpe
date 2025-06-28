@@ -1,4 +1,4 @@
-Package xpe contains experimental code for determining the number of
+Package xpe contains an experimental Go module for determining the number of
 performance and efficiency cores ("P-Cores" and "E-Cores") on the runtime CPU
 architecture.
 
