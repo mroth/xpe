@@ -2,7 +2,8 @@ package xpe
 
 import (
 	"fmt"
-	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 type sysctler interface {
@@ -13,11 +14,11 @@ type sysctler interface {
 type nativeSyscallPackage struct{}
 
 func (s nativeSyscallPackage) Sysctl(name string) (value string, err error) {
-	return syscall.Sysctl(name)
+	return unix.Sysctl(name)
 }
 
 func (s nativeSyscallPackage) SysctlUint32(name string) (value uint32, err error) {
-	return syscall.SysctlUint32(name)
+	return unix.SysctlUint32(name)
 }
 
 var darwinsys sysctler = nativeSyscallPackage{}
