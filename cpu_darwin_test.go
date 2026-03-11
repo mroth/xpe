@@ -93,6 +93,19 @@ func TestMockGetCPU_Darwin(t *testing.T) {
 			},
 		},
 		{
+			name: "MacBook Pro (14-inch, Nov 2024) - Apple M4 Pro [10p, 4e, 20g], macOS 26.3.1",
+			path: "testdata/m4pro-macos26_3_1.txt",
+			cpu: &CPU{
+				BrandString:              "Apple M4 Pro",
+				Threads:                  14,
+				Cores:                    14,
+				LogicalPerformanceCores:  10,
+				LogicalEfficiencyCores:   4,
+				PhysicalPerformanceCores: 10,
+				PhysicalEfficiencyCores:  4,
+			},
+		},
+		{
 			name: "MacBook Pro (14-inch, 2021) - Apple M1 Pro [8p, 2e, 16g], macOS 13.0.1",
 			path: "testdata/m1pro-macos13_0_1.txt",
 			cpu: &CPU{
