@@ -48,6 +48,31 @@ type PROCESSOR_RELATIONSHIP struct {
 	ProcessorMask   uint64
 }
 
+// windowsInfoProvider abstracts the Windows system calls used by GetCPU,
+// allowing for dependency injection in tests.
+type windowsInfoProvider interface {
+	getLogicalProcessorInfoBuf() ([]byte, error)
+	getProcessorBrandString() string
+}
+
+type nativeWindowsProvider struct{}
+
+func (nativeWindowsProvider) getLogicalProcessorInfoBuf() ([]byte, error) {
+	return getLogicalProcessorInfo()
+}
+
+func (nativeWindowsProvider) getProcessorBrandString() string {
+	if k, err := registry.OpenKey(registry.LOCAL_MACHINE, `HARDWARE\DESCRIPTION\System\CentralProcessor\0`, registry.QUERY_VALUE); err == nil {
+		defer k.Close()
+		if s, _, err2 := k.GetStringValue("ProcessorNameString"); err2 == nil {
+			return strings.TrimSpace(s)
+		}
+	}
+	return ""
+}
+
+var winsys windowsInfoProvider = nativeWindowsProvider{}
+
 // getLogicalProcessorInfo calls the Windows API and returns the raw buffer.
 func getLogicalProcessorInfo() ([]byte, error) {
 	kernel32 := windows.NewLazySystemDLL("kernel32.dll")
@@ -81,7 +106,7 @@ func getLogicalProcessorInfo() ([]byte, error) {
 // performance and efficiency cores and threads, and reads the processor name
 // from the registry if available.
 func GetCPU() (*CPU, error) {
-	buf, err := getLogicalProcessorInfo()
+	buf, err := winsys.getLogicalProcessorInfoBuf()
 	if err != nil {
 		return nil, err
 	}
@@ -124,14 +149,7 @@ func GetCPU() (*CPU, error) {
 		}
 	}
 
-	// try to fetch brand string from registry
-	var brand string
-	if k, err := registry.OpenKey(registry.LOCAL_MACHINE, `HARDWARE\DESCRIPTION\System\CentralProcessor\0`, registry.QUERY_VALUE); err == nil {
-		if s, _, err2 := k.GetStringValue("ProcessorNameString"); err2 == nil {
-			brand = strings.TrimSpace(s)
-		}
-		k.Close()
-	}
+	brand := winsys.getProcessorBrandString()
 
 	return &CPU{
 		BrandString:              brand,
