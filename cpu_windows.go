@@ -86,22 +86,42 @@ func GetCPU() (*CPU, error) {
 		return nil, err
 	}
 
-	var pCores, eCores, pThreads, eThreads int
+	type coreInfo struct {
+		efficiencyClass byte
+		threadCount     int
+	}
+	var cores []coreInfo
+	var maxEffClass byte
+
 	offset := 0
 	for offset < len(buf) {
 		header := (*SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)(unsafe.Pointer(&buf[offset]))
 		if header.Relationship == relationProcessorCore {
 			pr := (*PROCESSOR_RELATIONSHIP)(unsafe.Add(unsafe.Pointer(&buf[offset]), unsafe.Sizeof(*header)))
-			threadCount := bits.OnesCount64(pr.ProcessorMask)
-			if pr.Flags&1 != 0 {
-				pCores++
-				pThreads += threadCount
-			} else {
-				eCores++
-				eThreads += threadCount
+			ci := coreInfo{
+				efficiencyClass: pr.EfficiencyClass,
+				threadCount:     bits.OnesCount64(pr.ProcessorMask),
 			}
+			if ci.efficiencyClass > maxEffClass {
+				maxEffClass = ci.efficiencyClass
+			}
+			cores = append(cores, ci)
 		}
 		offset += int(header.Size)
+	}
+
+	// Classify cores. Cores with the highest EfficiencyClass are
+	// performance cores; all others are efficiency cores. On homogeneous CPUs
+	// (all cores same class), every core is treated as a performance core.
+	var pCores, eCores, pThreads, eThreads int
+	for _, ci := range cores {
+		if ci.efficiencyClass == maxEffClass {
+			pCores++
+			pThreads += ci.threadCount
+		} else {
+			eCores++
+			eThreads += ci.threadCount
+		}
 	}
 
 	// try to fetch brand string from registry
