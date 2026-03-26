@@ -38,14 +38,24 @@ type SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX struct {
 	Size         uint32
 }
 
-// Processor relationship struct (simplified)
+// GROUP_AFFINITY represents the Windows GROUP_AFFINITY structure.
+// https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-group_affinity
+type GROUP_AFFINITY struct {
+	Mask     uint64
+	Group    uint16
+	Reserved [3]uint16
+}
+
+// PROCESSOR_RELATIONSHIP represents the Windows PROCESSOR_RELATIONSHIP structure.
 // https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-processor_relationship
-// actually contains more fields, but we only care about Flags and ProcessorMask.
+// The real struct contains a variable-length GroupMask[GroupCount] array.
+// For RelationProcessorCore, GroupCount is always 1 per Microsoft docs.
 type PROCESSOR_RELATIONSHIP struct {
 	Flags           byte
 	EfficiencyClass byte
 	Reserved        [20]byte
-	ProcessorMask   uint64
+	GroupCount      uint16
+	GroupMask       [1]GROUP_AFFINITY
 }
 
 // windowsInfoProvider abstracts the Windows system calls used by GetCPU,
@@ -125,7 +135,7 @@ func GetCPU() (*CPU, error) {
 			pr := (*PROCESSOR_RELATIONSHIP)(unsafe.Add(unsafe.Pointer(&buf[offset]), unsafe.Sizeof(*header)))
 			ci := coreInfo{
 				efficiencyClass: pr.EfficiencyClass,
-				threadCount:     bits.OnesCount64(pr.ProcessorMask),
+				threadCount:     bits.OnesCount64(pr.GroupMask[0].Mask),
 			}
 			if ci.efficiencyClass > maxEffClass {
 				maxEffClass = ci.efficiencyClass

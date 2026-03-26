@@ -44,7 +44,8 @@ func buildProcessorInfoBuf(t *testing.T, cores []testCore) []byte {
 
 		pr := (*PROCESSOR_RELATIONSHIP)(unsafe.Pointer(&entry[headerSize]))
 		pr.EfficiencyClass = c.efficiencyClass
-		pr.ProcessorMask = c.threadMask
+		pr.GroupCount = 1
+		pr.GroupMask[0] = GROUP_AFFINITY{Mask: c.threadMask}
 
 		buf = append(buf, entry...)
 	}
