@@ -12,13 +12,13 @@ jobs:
       fail-fast: false
       matrix:
         go: ["oldstable", "stable"]
-        os: [macos-14, macos-15, macos-15-intel, macos-26, macos-26-intel] # https://github.com/actions/runner-images
+        os: [macos-14, macos-15, macos-15-intel, macos-26, macos-26-intel, windows-latest] # https://github.com/actions/runner-images
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
-      - run: |
-          sw_vers
-          go test -v
-          go run ./cmd
+      - name: Unit tests
+        run: go test -v
+      - name: Run cmd
+        run: go run ./cmd
